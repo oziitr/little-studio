@@ -294,7 +294,7 @@ function settings(){
         <button type="button" class="secondary" id="testyoutube">Test et</button>
       </div><p class="testresult" id="youtubetest"></p>
       ${field('Panel HTTPS','publicUrl',c.publicUrl,'url')}${field('OAuth istemci kimliği','clientId',c.clientId)}${field('OAuth sırrı (boş = koru)','clientSecret','','password')}
-      <p class="muted">Callback: ${esc(c.publicUrl||'https://panel.example')}/api/youtube/callback</p>
+      <p class="muted">Callback: ${esc(c.publicUrl||'https://SENIN-PANELIN')}/api/youtube/callback</p>
       <label class="check"><input type="checkbox" name="autoPublish" ${c.autoPublish!==false?'checked':''}> Herkese açık yayına izin</label>
       <label class="check"><input type="checkbox" name="autoSharePool" ${c.autoSharePool!==false?'checked':''}> Üretim bitince otomatik yükle</label>`,
     telegram:`<h2>Telegram</h2>

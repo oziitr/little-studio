@@ -2,7 +2,7 @@
 
 ## İlk bağlantı
 
-Panel: **https://panel.example** (DNS ve sertifika tamamlandığında).
+Panel: kendi HTTPS adresin (örnek `https://studio.example.com`).
 Giriş parolası sunucudaki `/etc/little-studio.env` dosyasında `STUDIO_PASSWORD` alanındadır. Parolayı veya API anahtarını sohbete göndermeyin.
 
 ## Google
@@ -19,7 +19,7 @@ Giriş parolası sunucudaki `/etc/little-studio.env` dosyasında `STUDIO_PASSWOR
 
 1. Google Cloud projesinde YouTube Data API v3'ü etkinleştirin.
 2. OAuth izin ekranını hazırlayın. Test modundaysa kendi Google hesabınızı test kullanıcısı ekleyin.
-3. Web uygulaması OAuth istemcisi oluşturun. Redirect URI tam olarak `https://panel.example/api/youtube/callback` olmalı.
+3. Web uygulaması OAuth istemcisi oluşturun. Redirect URI tam olarak `https://SENIN-PANELIN/api/youtube/callback` olmalı.
 4. Panel bağlantılarında OAuth istemci kimliği ve sırrını kaydedin. YouTube hesabını bağla ile Google izin akışını tamamlayın.
 5. Varsayılan yükleme gizlidir. Herkese açık/zamanlanmış yayın için ayarı açıkça etkinleştirin.
 
