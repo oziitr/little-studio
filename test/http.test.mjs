@@ -1,0 +1,27 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+test('authenticated project API, CSRF rejection, missing-key gate and scene media upload',async t=>{
+  const dir=mkdtempSync(path.join(tmpdir(),'studio-http-'));const child=spawn(process.execPath,['server.mjs'],{env:{...process.env,PORT:'0',DATA_DIR:dir,STUDIO_PASSWORD:'test-password-long-enough',HOST:'127.0.0.1'},stdio:['ignore','pipe','pipe'],windowsHide:true});
+  t.after(async()=>{child.kill();await new Promise(resolve=>{if(child.exitCode!==null)return resolve();child.once('exit',resolve);});rmSync(dir,{recursive:true,force:true});});
+  const url=await new Promise((resolve,reject)=>{child.stdout.on('data',x=>{const match=x.toString().match(/Studio (http:\/\/[^\s]+)/);if(match)resolve(match[1]);});child.once('exit',()=>reject(Error('server failed')));});
+  assert.equal((await fetch(url+'/api/state')).status,401);
+  const login=await fetch(url+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:'test-password-long-enough'})});assert.equal(login.status,200);const cookie=login.headers.get('set-cookie').split(';')[0];
+  const headers={'Content-Type':'application/json',Cookie:cookie};assert.equal((await fetch(url+'/api/projects',{method:'POST',headers:{...headers,Origin:'https://evil.example'},body:'{}'})).status,403);
+  const r=await fetch(url+'/api/projects',{method:'POST',headers,body:JSON.stringify({title:'API test',language:'tr',scenes:[{visual:'fox'}]})});assert.equal(r.status,201);const p=await r.json();assert.equal(p.language,'tr');
+  const paid=await fetch(`${url}/api/projects/${p.id}/jobs`,{method:'POST',headers,body:JSON.stringify({kind:'story'})});assert.equal(paid.status,400);
+  const state=await(await fetch(url+'/api/state',{headers})).json();assert.equal(state.projects.length,1);assert.equal(state.integrations.paid,false);assert.equal(state.budget.day,0);
+  assert.ok(state.system.version);assert.ok(state.system.node.startsWith('v'));assert.ok(Array.isArray(state.jobs));
+  const unauth=await fetch(url+'/api/settings/test/google',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});assert.equal(unauth.status,401);
+  const g=await fetch(url+'/api/settings/test/google',{method:'POST',headers,body:'{}'});assert.equal(g.status,400);assert.match((await g.json()).error,/anahtar/i);
+  const y=await fetch(url+'/api/settings/test/youtube',{method:'POST',headers,body:'{}'});assert.equal(y.status,400);assert.match((await y.json()).error,/hesabı yok/i);
+  const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+  const up=await fetch(`${url}/api/projects/${p.id}/scenes/0/media`,{method:'POST',headers,body:JSON.stringify({kind:'image',data:png})});assert.equal(up.status,200);
+  const after=await(await fetch(url+'/api/state',{headers})).json();assert.ok(after.projects[0].scenes[0].image.file.endsWith('.png'));
+  const bad=await fetch(`${url}/api/projects/${p.id}/scenes/0/media`,{method:'POST',headers,body:JSON.stringify({kind:'image',data:Buffer.from('not an image').toString('base64')})});assert.equal(bad.status,400);
+  const fakemp4=Buffer.from([0,0,0,24,0x66,0x74,0x79,0x70,0,0,0,0,0,0,0,0]).toString('base64');
+  const badclip=await fetch(`${url}/api/projects/${p.id}/scenes/0/media`,{method:'POST',headers,body:JSON.stringify({kind:'clip',data:fakemp4})});assert.equal(badclip.status,400);
+});

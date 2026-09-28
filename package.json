@@ -1,0 +1,16 @@
+{
+  "name": "ministory-studio",
+  "version": "0.7.3",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.mjs",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}

@@ -1,0 +1,13 @@
+import { DatabaseSync, backup } from 'node:sqlite';
+import { mkdir, copyFile, cp } from 'node:fs/promises';
+import path from 'node:path';
+const data=process.env.DATA_DIR||'data';
+const target=process.argv[2];
+if(!target)throw Error('Yedek hedef dizinini belirtin.');
+const src=path.resolve(data),dst=path.resolve(target);
+if(dst===src||dst.startsWith(src+path.sep))throw Error('Yedek hedefi veri dizini dışında olmalı.');
+await mkdir(dst,{recursive:true,mode:0o700});
+const db=new DatabaseSync(path.join(src,'studio.sqlite'));await backup(db,path.join(dst,'studio.sqlite'));db.close();
+await copyFile(path.join(src,'vault.key'),path.join(dst,'vault.key'));
+await cp(path.join(src,'media'),path.join(dst,'media'),{recursive:true,errorOnExist:true,force:false}).catch(e=>{if(e.code!=='ENOENT')throw e;});
+console.log('Yedek tamamlandı. Bu dizin şifre çözme anahtarını da içerir; özel saklayın.');

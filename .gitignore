@@ -1,0 +1,9 @@
+data/
+.env
+node_modules/
+data/
+.env
+node_modules/
+gemini-session.json
+*.png
+debug/
